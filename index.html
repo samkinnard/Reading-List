@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Reading Room">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>The Reading Room</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,500&display=swap">
+<style>
+/* Layout: one phone-width column, sticky header, bottom tab bar, slide-up sheet for add/edit. */
+:root{
+  --bg:#eceee4; --card:#f8f8f2; --line:#d9dccb; --fg:#2a2822; --muted:#6c6a5c;
+  --moss:#4a5d3a; --moss-soft:#dde6cf; --bark:#7b5d3c; --bark-soft:#eadfca;
+  --gold:#b8891f; --gold-soft:#f3e2a8; --gold-ink:#6b4d0e; --clay:#a4564a; --clay-soft:#efd5cd;
+  --on-moss:#f6f7ee; --shadow:0 -8px 30px rgba(40,36,24,.18);
+  --serif:"Newsreader",Georgia,"Times New Roman",serif;
+  --sans:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1a1e17; --card:#242a20; --line:#363d30; --fg:#ebe8da; --muted:#a09d8c;
+  --moss:#9fb987; --moss-soft:#34412b; --bark:#c5a47a; --bark-soft:#3d3326;
+  --gold:#e0b84f; --gold-soft:#4d3f17; --gold-ink:#f2d98a; --clay:#d98c7e; --clay-soft:#4c2e29;
+  --on-moss:#1a1e17; --shadow:0 -8px 30px rgba(0,0,0,.5); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1a1e17; --card:#242a20; --line:#363d30; --fg:#ebe8da; --muted:#a09d8c;
+  --moss:#9fb987; --moss-soft:#34412b; --bark:#c5a47a; --bark-soft:#3d3326;
+  --gold:#e0b84f; --gold-soft:#4d3f17; --gold-ink:#f2d98a; --clay:#d98c7e; --clay-soft:#4c2e29;
+  --on-moss:#1a1e17; --shadow:0 -8px 30px rgba(0,0,0,.5); color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:16px/1.45 var(--sans);-webkit-text-size-adjust:100%;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:30}
+#app{max-width:680px;margin:0 auto;padding-bottom:96px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--moss);outline-offset:2px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;align-items:center;gap:10px;padding-block:12px}
+header.top h1{font:600 26px/1.1 var(--serif);margin:0;flex:1;min-width:0;letter-spacing:-.01em}
+.iconbtn{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;flex:none}
+.iconbtn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.addbtn{height:44px;padding:0 18px 0 14px;border-radius:22px;border:0;background:var(--moss);color:var(--on-moss);font-weight:600;display:flex;align-items:center;gap:6px;flex:none}
+.addbtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round}
+.sub{color:var(--muted);margin:0 0 14px;font-size:15px}
+h2{font:600 20px/1.2 var(--serif);margin:26px 0 10px}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--card);border-top:1px solid var(--line);
+  display:flex;padding:6px max(6px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px))}
+nav.tabs button{flex:1;min-width:0;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;color:var(--muted);font-size:11px;font-weight:600;border-radius:10px}
+nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+nav.tabs button[aria-current="page"]{color:var(--moss);background:var(--moss-soft)}
+.seg{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--card);border-radius:20px;padding:8px 14px;min-height:40px;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:6px;user-select:none}
+.chip[aria-pressed="true"]{background:var(--moss);color:var(--on-moss);border-color:var(--moss)}
+.chip small{opacity:.75}
+.tools{display:flex;gap:8px;margin-bottom:10px}
+.tools input,.tools select{flex:1;min-width:0;height:44px;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:0 12px}
+.list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:none;padding:12px 14px;min-height:60px;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row .main{flex:1;min-width:0}
+.row .t{font:600 17px/1.25 var(--serif);overflow-wrap:anywhere}
+.row .a{color:var(--muted);font-size:14px;overflow-wrap:anywhere}
+.row .meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none;font-size:13px;color:var(--muted)}
+.rate{font-weight:700;color:var(--bark);font-variant-numeric:tabular-nums;font-size:15px}
+.pill{border-radius:10px;padding:2px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill.finished{background:var(--moss-soft);color:var(--moss)}
+.pill.unread{background:var(--bark-soft);color:var(--bark)}
+.pill.reading{background:var(--gold-soft);color:var(--gold-ink)}
+.pill.fmt{background:var(--bark-soft);color:var(--bark)}
+.pill.dnf{background:var(--clay-soft);color:var(--clay)}
+.pill.own{background:none;border:1px solid var(--line);color:var(--muted)}
+.empty{border:1px dashed var(--line);border-radius:14px;padding:28px 18px;text-align:center;color:var(--muted)}
+.empty b{display:block;font:600 19px var(--serif);color:var(--fg);margin-bottom:4px}
+.cards{display:flex;flex-direction:column;gap:12px}
+.bookcard{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.bookcard .t{font:600 22px/1.2 var(--serif);overflow-wrap:anywhere}
+.bookcard .a{color:var(--muted)}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:0 16px;min-height:44px;font-weight:600}
+.btn.primary{background:var(--moss);color:var(--on-moss);border-color:var(--moss)}
+.btn.danger{color:var(--clay);border-color:var(--clay)}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.tile b{display:block;font:600 28px/1.1 var(--serif);font-variant-numeric:tabular-nums}
+.tile span{color:var(--muted);font-size:13px}
+.bars{display:flex;flex-direction:column;gap:7px}
+.bar{display:grid;grid-template-columns:minmax(80px,38%) 1fr auto;gap:10px;align-items:center;font-size:14px}
+.bar .lab{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .track{height:12px;background:var(--moss-soft);border-radius:6px;overflow:hidden}
+.bar .fill{height:100%;background:var(--moss);border-radius:6px}
+.bar.gold .fill{background:var(--gold)}
+.bar.gold .track{background:var(--gold-soft)}
+.bar .num{color:var(--muted);font-variant-numeric:tabular-nums;font-size:13px;text-align:right;min-width:3.2em}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.prog{height:14px;border-radius:7px;background:var(--moss-soft);overflow:hidden;margin:8px 0}
+.prog div{height:100%;background:var(--moss)}
+.goalrow{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px}
+.goalrow input{width:72px;height:40px;border:1px solid var(--line);background:var(--bg);border-radius:10px;text-align:center}
+
+.row.five{background:var(--gold-soft);box-shadow:inset 5px 0 0 var(--gold)}
+.row.five .rate{color:var(--gold-ink)}
+.bookcard .top{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+.bookcard .top>div{min-width:0}
+.pline{display:flex;justify-content:space-between;gap:10px;font-size:14px;color:var(--muted);flex-wrap:wrap}
+.pline b{color:var(--fg);font:600 22px/1 var(--serif);font-variant-numeric:tabular-nums}
+.bookcard .prog{margin:0}
+.pin{display:flex;gap:8px;align-items:center}
+.pin label{font-size:13px;font-weight:600;color:var(--muted);flex:none}
+.pin input{flex:1;min-width:0;height:44px;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:0 12px}
+.qrow{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.qrow:last-child{border-bottom:0}
+.qrow.done{box-shadow:inset 4px 0 0 var(--moss)}
+.qrow .t{font:600 16px/1.25 var(--serif);overflow-wrap:anywhere}
+.qrow .a{color:var(--muted);font-size:13px}
+.qc{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.qc input[type=number],.qc input[type=text],.qc input[type=month]{flex:1 1 110px;min-width:0;height:44px;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:0 10px}
+.qa{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);font-size:14px;font-weight:500}
+.qa input{width:20px;height:20px;accent-color:var(--moss);margin:0}
+.big{font:600 30px/1.1 var(--serif);font-variant-numeric:tabular-nums}
+.panel.gold{background:var(--gold-soft);border-color:var(--gold)}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
+.kv:last-of-type{border-bottom:0}
+.kv span:first-child{color:var(--muted)}
+.kv span:last-child{text-align:right;min-width:0;overflow-wrap:anywhere}
+/* sheet */
+.overlay{position:fixed;inset:0;background:rgba(20,22,16,.55);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:680px;max-height:94vh;overflow-y:auto;border-radius:20px 20px 0 0;box-shadow:var(--shadow);
+  padding:18px max(16px,env(safe-area-inset-left,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px))}
+.sheet h3{font:600 24px var(--serif);margin:0 0 14px}
+.field{margin-bottom:16px}
+.field>label,.field>.lbl{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.field input[type=text],.field input[type=number],.field input[type=date],.field select,.field textarea{width:100%;min-height:46px;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:10px 12px}
+.field textarea{min-height:80px;resize:vertical}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{position:relative}
+.opt input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.opt span{display:inline-flex;align-items:center;min-height:42px;padding:0 14px;border:1px solid var(--line);background:var(--card);border-radius:21px;font-size:14px;font-weight:500}
+.opt input:checked+span{background:var(--moss);color:var(--on-moss);border-color:var(--moss)}
+.opt input:focus-visible+span{outline:2px solid var(--moss);outline-offset:2px}
+.opt.r span{font-variant-numeric:tabular-nums}
+.hint{color:var(--muted);font-size:13px;margin:6px 0 0}
+.actions{display:flex;gap:10px;margin-top:8px;position:sticky;bottom:0}
+.actions .btn{flex:1}
+textarea.code{width:100%;height:110px;font:12px/1.4 ui-monospace,Menlo,monospace;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:10px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:22px;font-weight:600;z-index:50;font-size:14px;max-width:90vw}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .22s ease-out}@keyframes up{from{transform:translateY(40px);opacity:.4}}}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header class="top">
+    <h1 id="ttl">Currently Reading</h1>
+    <button class="iconbtn" id="gear" aria-label="Settings and backup"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+    <button class="addbtn" id="add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add Book</button>
+  </header>
+  <main id="main"></main>
+</div>
+<nav class="tabs" id="tabs" aria-label="Sections"></nav>
+<div id="layer"></div>
+
+<script>
+const SEED=[["Before They Are Hanged","Abercrombie","Joe","finished","","",3.75,["Fantasy","Epic"],"Long",""],["Best Served Cold","Abercrombie","Joe","finished","","",3.0,["Fantasy"],"Long",""],["Last Argument of Kings","Abercrombie","Joe","finished","","",4.0,["Fantasy","Epic"],"Very Long",""],["The Blade Itself","Abercrombie","Joe","finished","","",3.25,["Fantasy","Epic"],"Long",""],["Emma","Austen","Jane","unread","N","",0,["Literary Fiction","Classic","Romance"],"Long",""],["Mansfield Park","Austen","Jane","unread","N","",0,["Literary Fiction","Classic","Romance"],"Long",""],["Persuasion","Austen","Jane","unread","Y","Print",0,["Literary Fiction","Classic","Romance"],"Short",""],["Pride and Prejudice","Austen","Jane","finished","","",4.0,["Classic","Romance"],"Short",""],["Sense and Sensibility","Austen","Jane","finished","","",3.5,["Classic","Romance"],"Medium",""],["A Place on Earth","Berry","Wendell","unread","N","",0,["Literary Fiction","Contemporary"],"Medium",""],["Hannah Coulter","Berry","Wendell","unread","N","",0,["Literary Fiction","Contemporary"],"Short",""],["Jayber Crow","Berry","Wendell","unread","N","",0,["Literary Fiction","Contemporary"],"Medium",""],["Fahrenheit 451","Bradbury","Ray","finished","","",4.0,["Sci-Fi","Dystopian","Classic"],"Short",""],["Something Wicked This Way Comes","Bradbury","Ray","unread","Y","Print",0,["Fantasy","Horror","Coming-Of-Age","Classic"],"Short",""],["Jane Eyre","Bronte","Charlotte","unread","N","",0,["Literary Fiction","Classic","Romance"],"Long",""],["Wuthering Heights","Bronte","Emily","finished","","",4.25,["Literary Fiction","Classic","Romance"],"Medium",""],["Dark Age","Brown","Pierce","finished","","",4.5,["Sci-Fi","Space Opera","Epic"],"Very Long",""],["Golden Son","Brown","Pierce","finished","","",4.5,["Sci-Fi","Space Opera","Epic"],"Long",""],["Iron Gold","Brown","Pierce","finished","","",3.5,["Sci-Fi","Space Opera","Epic"],"Long",""],["Light Bringer","Brown","Pierce","finished","","",5.0,["Sci-Fi","Space Opera","Epic"],"Long",""],["Morning Star","Brown","Pierce","finished","","",3.75,["Sci-Fi","Space Opera","Epic"],"Long",""],["Red Rising","Brown","Pierce","finished","","",3.75,["Sci-Fi","Space Opera","Dystopian","Epic"],"Medium",""],["Between Two Fires","Buehlman","Christopher","finished","","",3.25,["Horror","Historical Fiction","Fantasy"],"Medium",""],["Ender's Game","Card","Orson Scott","unread","N","",0,["Sci-Fi","Young Adult"],"Medium",""],["Hard Rain Falling","Carpenter","Don","reading","","",0,["Literary Fiction","Contemporary","Coming-Of-Age"],"Medium",""],["Jonathan Strange & Mr. Norrell","Clarke","Susanna","unread","Y","Print",0,["Fantasy","Historical Fiction","Literary Fiction"],"Very Long",""],["Piranesi","Clarke","Susanna","finished","","",4.5,["Fantasy","Literary Fiction"],"Short",""],["Shogun","Clavell","James","reading","","Audiobook",0,["Historical Fiction","Adventure","Foreign"],"Very Long",""],["Ready Player One","Cline","Ernest","finished","","",1.5,["Sci-Fi","Dystopian","Adventure"],"Medium",""],["Ballad of Songbirds and Snakes","Collins","Suzanne","finished","","",2.0,["Dystopian","Young Adult"],"Long",""],["Sunrise on the Reaping","Collins","Suzanne","finished","","",2.5,["Dystopian","Young Adult"],"Medium",""],["The Prince of Tides","Conroy","Pat","unread","N","",0,["Literary Fiction","Contemporary"],"Long",""],["Leviathan Wakes","Corey","James S. A.","unread","N","",0,["Sci-Fi","Space Opera"],"Long",""],["Jurassic Park","Crichton","Michael","finished","","",3.75,["Sci-Fi","Thriller"],"Medium",""],["Timeline","Crichton","Michael","finished","","",4.25,["Sci-Fi","Time-Travel","Thriller"],"Medium",""],["Dark Matter","Crouch","Blake","finished","","",3.75,["Sci-Fi","Thriller"],"Medium",""],["Recursion","Crouch","Blake","finished","","",4.0,["Sci-Fi","Thriller","Time-Travel"],"Medium",""],["A Tale of Two Cities","Dickens","Charles","unread","Y","Audiobook",0,["Literary Fiction","Classic","Historical Fiction"],"Medium","also owned in print"],["Bleak House","Dickens","Charles","unread","Y","Audiobook",0,["Literary Fiction","Classic","Mystery"],"Very Long",""],["David Copperfield","Dickens","Charles","unread","Y","Audiobook",0,["Literary Fiction","Classic","Coming-Of-Age"],"Very Long",""],["Great Expectations","Dickens","Charles","finished","","",4.0,["Literary Fiction","Classic","Coming-Of-Age"],"Long",""],["Hard Times","Dickens","Charles","unread","Y","Audiobook",0,["Literary Fiction","Classic"],"Short",""],["Oliver Twist","Dickens","Charles","unread","Y","Audiobook",0,["Literary Fiction","Classic"],"Long",""],["Crime and Punishment","Dostoevsky","Fyodor","finished","","",5.0,["Literary Fiction","Classic","Foreign"],"Long",""],["Demons","Dostoevsky","Fyodor","unread","N","",0,["Literary Fiction","Classic","Foreign"],"Very Long",""],["Notes from a Dead House","Dostoevsky","Fyodor","unread","N","",0,["Literary Fiction","Classic","Foreign"],"Medium",""],["Notes from Underground","Dostoevsky","Fyodor","unread","N","",0,["Literary Fiction","Classic","Foreign"],"Very Short",""],["The Brothers Karamazov","Dostoevsky","Fyodor","unread","N","",0,["Literary Fiction","Classic","Foreign"],"Very Long",""],["The Double","Dostoevsky","Fyodor","unread","N","",0,["Literary Fiction","Classic","Foreign"],"Short",""],["The Gambler","Dostoevsky","Fyodor","unread","Y","Print",0,["Literary Fiction","Classic","Foreign"],"Short",""],["The Idiot","Dostoevsky","Fyodor","unread","Y","Print",0,["Literary Fiction","Classic","Foreign"],"Very Long",""],["White Nights","Dostoevsky","Fyodor","unread","N","",0,["Literary Fiction","Classic","Foreign","Romance"],"Very Short",""],["The Reformatory","Due","Tananarive","unread","N","",0,["Horror","Historical Fiction"],"Long",""],["The Count of Monte Cristo","Dumas","Alexandre","unread","N","",0,["Classic","Adventure","Foreign"],"Very Long",""],["The Three Musketeers","Dumas","Alexandre","unread","N","",0,["Classic","Adventure","Foreign"],"Very Long",""],["The Land Breakers","Ehle","John","unread","N","",0,["Historical Fiction","Frontier"],"Long",""],["This Is How You Lose the Time War","El-Mohtar & Gladstone","Amal & Max","finished","","",3.0,["Sci-Fi","Time-Travel","Romance","Novella"],"Short",""],["Middlemarch","Eliot","George","unread","Y","Audiobook",0,["Literary Fiction","Classic"],"Very Long",""],["Deadhouse Gates","Erikson","Steven","unread","N","",0,["Fantasy","Epic"],"Very Long",""],["Gardens of the Moon","Erikson","Steven","unread","Y","Print",0,["Fantasy","Epic"],"Very Long",""],["Memories of Ice","Erikson","Steven","unread","N","",0,["Fantasy","Epic"],"Very Long",""],["Absalom, Absalom!","Faulkner","William","unread","N","",0,["Literary Fiction","Classic"],"Medium",""],["As I Lay Dying","Faulkner","William","finished","","",4.0,["Literary Fiction","Classic"],"Short",""],["The Sound and the Fury","Faulkner","William","unread","N","",0,["Literary Fiction","Classic"],"Medium",""],["The Great Gatsby","Fitzgerald","F. Scott","finished","","",3.25,["Classic","Literary Fiction"],"Short",""],["Gone Girl","Flynn","Gillian","finished","","",1.0,["Thriller","Mystery","Crime/Noir"],"Medium",""],["One Second After","Forstchen","William R.","unread","N","",0,["Sci-Fi","Dystopian"],"Medium",""],["Cold Mountain","Frazier","Charles","unread","N","",0,["Historical Fiction","Literary Fiction","War","Frontier"],"Medium",""],["Neuromancer","Gibson","William","dnf","","",0,["Sci-Fi","Classic"],"Short",""],["Lord of the Flies","Golding","William","finished","","",3.5,["Classic","Dystopian","Young Adult"],"Short",""],["Unreasonable Hospitality","Guidara","Will","finished","","",3.0,["Non-Fiction"],"Medium",""],["Waco","Guinn","Jeff","unread","N","",0,["Non-Fiction"],"Long",""],["Malice","Gwynne","John","unread","Y","Print",0,["Fantasy","Epic"],"Long",""],["Ruin","Gwynne","John","unread","Y","Print",0,["Fantasy","Epic"],"Long",""],["Shadow of the Gods","Gwynne","John","finished","","",3.75,["Fantasy","Epic"],"Medium",""],["The Fury of the Gods","Gwynne","John","finished","","",3.25,["Fantasy","Epic"],"Long",""],["The Hunger of the Gods","Gwynne","John","finished","","",3.5,["Fantasy","Epic"],"Long",""],["Valor","Gwynne","John","unread","Y","Print",0,["Fantasy","Epic"],"Long",""],["Wrath","Gwynne","John","unread","Y","Print",0,["Fantasy","Epic"],"Very Long",""],["Warlock","Hall","Oakley","unread","N","",0,["Western","Frontier","Literary Fiction"],"Long",""],["Legends of the Fall","Harrison","Jim","unread","N","",0,["Literary Fiction","Novella","Western","Frontier"],"Very Short",""],["Eventide","Haruf","Kent","unread","N","",0,["Literary Fiction","Contemporary","Western"],"Short",""],["Plainsong","Haruf","Kent","finished","","",4.25,["Literary Fiction","Contemporary","Western"],"Medium",""],["The Girl on the Train","Hawkins","Paula","finished","","",2.5,["Thriller","Mystery"],"Medium",""],["Catch-22","Heller","Joseph","finished","","",5.0,["Classic","Satire","War"],"Long",""],["A Farewell to Arms","Hemingway","Ernest","unread","N","",0,["Literary Fiction","Classic","War","Romance"],"Medium",""],["For Whom the Bell Tolls","Hemingway","Ernest","finished","","",4.0,["Classic","War","Historical Fiction"],"Long",""],["The Old Man and the Sea","Hemingway","Ernest","finished","","",3.75,["Classic","Novella"],"Very Short",""],["The Sun Also Rises","Hemingway","Ernest","finished","","",3.75,["Literary Fiction","Classic"],"Short",""],["Chapterhouse: Dune","Herbert","Frank","unread","N","",0,["Sci-Fi","Space Opera"],"Medium",""],["Children of Dune","Herbert","Frank","finished","","",3.5,["Sci-Fi","Space Opera"],"Medium",""],["Dune","Herbert","Frank","finished","","",4.5,["Sci-Fi","Space Opera","Classic"],"Medium",""],["Dune: Messiah","Herbert","Frank","finished","","",3.5,["Sci-Fi","Space Opera"],"Short",""],["God Emperor of Dune","Herbert","Frank","finished","","",3.25,["Sci-Fi","Space Opera"],"Medium",""],["Heretics of Dune","Herbert","Frank","unread","N","",0,["Sci-Fi","Space Opera"],"Long",""],["The Outsiders","Hinton","S.E.","unread","Y","Audiobook",0,["Young Adult","Coming-Of-Age","Classic"],"Short",""],["A Prayer for Owen Meany","Irving","John","finished","","",3.5,["Literary Fiction","Classic"],"Long",""],["The Shadow of What Was Lost","Islington","James","finished","","",3.0,["Fantasy","Epic"],"Long",""],["The Strength of the Few","Islington","James","finished","","",2.5,["Fantasy","Novella"],"Short",""],["The Will of the Many","Islington","James","finished","","",4.0,["Fantasy"],"Long",""],["Train Dreams","Johnson","Denis","finished","","",3.25,["Literary Fiction","Novella","Western","Frontier"],"Very Short",""],["The Buffalo Hunter Hunter","Jones","Stephen Graham","finished","","",4.5,["Horror","Historical Fiction"],"Medium",""],["The Metamorphosis","Kafka","Franz","finished","","",4.0,["Classic","Foreign","Novella"],"Very Short",""],["The Trial","Kafka","Franz","unread","N","",0,["Literary Fiction","Classic","Foreign"],"Short",""],["The Lions of Al-Rassan","Kay","Guy Gavriel","unread","N","",0,["Fantasy","Historical Fiction"],"Long",""],["Foster","Keegan","Claire","finished","","",3.25,["Literary Fiction","Novella","Foreign"],"Very Short",""],["One Flew Over the Cuckoo's Nest","Kesey","Ken","finished","","",5.0,["Literary Fiction","Classic"],"Medium",""],["Sometimes a Great Notion","Kesey","Ken","unread","N","",0,["Literary Fiction","Western","Frontier"],"Long",""],["Flowers for Algernon","Keyes","Daniel","finished","","",5.0,["Sci-Fi","Classic"],"Medium",""],["11/22/63","King","Stephen","finished","","",5.0,["Sci-Fi","Time-Travel","Thriller"],"Very Long",""],["The Institute","King","Stephen","finished","","",3.25,["Horror","Thriller"],"Long",""],["The Shining","King","Stephen","finished","","",2.5,["Horror"],"Medium",""],["The Stand","King","Stephen","finished","","",3.25,["Horror","Post-Apocalyptic","Dystopian"],"Very Long",""],["A Separate Peace","Knowles","John","finished","","",3.75,["Classic","Coming-Of-Age"],"Short",""],["The Girl with the Dragon Tattoo","Larsson","Stieg","finished","","",3.25,["Thriller","Mystery","Crime/Noir","Foreign"],"Long",""],["Daughter of Crows","Lawrence","Mark","dnf","","",0,["Fantasy"],"Medium",""],["The Dispossessed","Le Guin","Ursula K.","unread","N","",0,["Sci-Fi","Classic"],"Medium",""],["The Left Hand of Darkness","Le Guin","Ursula K.","unread","N","",0,["Sci-Fi","Classic"],"Medium",""],["To Kill a Mockingbird","Lee","Harper","finished","","",5.0,["Classic","Coming-Of-Age"],"Medium",""],["Mystic River","Lehane","Dennis","unread","N","",0,["Thriller","Mystery","Crime/Noir","Contemporary"],"Medium",""],["Theo of Golden","Levi","Allen","finished","","",4.5,["Literary Fiction","Contemporary"],"Short",""],["Mere Christianity","Lewis","C.S.","unread","Y","Print",0,["Non-Fiction"],"Short",""],["The Screwtape Letters","Lewis","C.S.","finished","","",5.0,["Literary Fiction","Satire"],"Short",""],["Moneyball","Lewis","Michael","finished","","",3.5,["Non-Fiction"],"Short",""],["The Lies of Locke Lamora","Lynch","Scott","finished","","",2.75,["Fantasy","Adventure"],"Very Long",""],["A River Runs Through It","Maclean","Norman","unread","Y","Print",0,["Literary Fiction","Novella","Frontier","Western"],"Very Short",""],["Fatale","Manchette","Jean-Patrick","unread","N","",0,["Crime/Noir","Thriller","Foreign","Novella"],"Very Short",""],["A Clash of Kings","Martin","George R.R.","finished","","",4.0,["Fantasy","Epic"],"Very Long",""],["A Dance with Dragons","Martin","George R.R.","unread","Y","Print",0,["Fantasy","Epic"],"Very Long",""],["A Feast for Crows","Martin","George R.R.","unread","Y","Print",0,["Fantasy","Epic"],"Very Long",""],["A Game of Thrones","Martin","George R.R.","finished","","",3.75,["Fantasy","Epic"],"Very Long",""],["A Knight of the Seven Kingdoms","Martin","George R.R.","unread","N","",0,["Fantasy","Novella"],"Medium",""],["A Storm of Swords","Martin","George R.R.","finished","","",4.25,["Fantasy","Epic"],"Very Long",""],["Fire & Blood","Martin","George R.R.","unread","Y","Print",0,["Fantasy","Historical Fiction","Epic"],"Very Long",""],["All the Pretty Horses","McCarthy","Cormac","finished","","",4.75,["Literary Fiction","Western","Frontier","Coming-Of-Age"],"Medium",""],["Blood Meridian","McCarthy","Cormac","finished","","",3.75,["Western","Literary Fiction","Frontier"],"Medium",""],["Cities of the Plain","McCarthy","Cormac","finished","","",4.25,["Literary Fiction","Western","Frontier"],"Short",""],["No Country for Old Men","McCarthy","Cormac","finished","","",4.25,["Literary Fiction","Western","Thriller","Crime/Noir"],"Medium",""],["Outer Dark","McCarthy","Cormac","unread","N","",0,["Literary Fiction","Western","Frontier","Horror"],"Short",""],["Stella Maris","McCarthy","Cormac","unread","Y","Print",0,["Literary Fiction"],"Short",""],["Suttree","McCarthy","Cormac","unread","N","",0,["Literary Fiction"],"Long",""],["The Crossing","McCarthy","Cormac","finished","","",4.25,["Literary Fiction","Western","Frontier"],"Medium",""],["The Passenger","McCarthy","Cormac","unread","Y","Print",0,["Literary Fiction","Mystery"],"Medium",""],["The Road","McCarthy","Cormac","finished","","",5.0,["Literary Fiction","Post-Apocalyptic","Dystopian"],"Short",""],["The Sunset Limited","McCarthy","Cormac","unread","N","",0,["Literary Fiction","Contemporary"],"Very Short",""],["Comanche Moon","McMurtry","Larry","finished","","",4.0,["Western","Frontier"],"Long",""],["Dead Man's Walk","McMurtry","Larry","finished","","",4.25,["Western","Frontier"],"Long",""],["Lonesome Dove","McMurtry","Larry","finished","","",5.0,["Western","Frontier","Classic"],"Very Long",""],["Streets of Laredo","McMurtry","Larry","finished","","",5.0,["Western","Frontier"],"Very Long",""],["The Last Picture Show","McMurtry","Larry","dnf","","",0,["Western","Coming-Of-Age","Literary Fiction"],"Short",""],["Battle Cry of Freedom","McPherson","James M.","unread","N","",0,["Non-Fiction","War"],"Very Long",""],["American Rust","Meyer","Philipp","unread","N","",0,["Literary Fiction","Contemporary"],"Medium",""],["The Son","Meyer","Philipp","finished","","",4.25,["Literary Fiction","Western","Historical Fiction"],"Long",""],["The Silent Patient","Michaelides","Alex","finished","","",3.5,["Thriller","Mystery"],"Medium",""],["Destiny of the Republic","Millard","Candice","unread","N","",0,["Non-Fiction"],"Medium",""],["Death of a Salesman","Miller","Arthur","unread","N","",0,["Classic"],"Very Short",""],["The Crucible","Miller","Arthur","unread","N","",0,["Classic","Historical Fiction"],"Very Short",""],["A Canticle for Leibowitz","Miller Jr.","Walter M.","unread","N","",0,["Sci-Fi","Post-Apocalyptic","Classic"],"Medium",""],["True Grit","Portis","Charles","unread","Y","Print",0,["Western","Frontier","Coming-Of-Age"],"Short",""],["Gates of Fire","Pressfield","Steven","unread","N","",0,["Historical Fiction","War","Adventure"],"Medium",""],["The Prestige","Priest","Christopher","finished","","",3.5,["Sci-Fi","Mystery","Historical Fiction"],"Medium",""],["The Revenant","Punke","Michael","finished","","",3.5,["Western","Frontier","Historical Fiction"],"Short",""],["Harry Potter and the Chamber of Secrets","Rowling","J.K.","finished","","",3.75,["Fantasy","Young Adult"],"Medium",""],["Harry Potter and the Deathly Hallows","Rowling","J.K.","finished","","",4.0,["Fantasy","Young Adult"],"Very Long",""],["Harry Potter and the Goblet of Fire","Rowling","J.K.","finished","","",3.5,["Fantasy","Young Adult"],"Very Long",""],["Harry Potter and the Half-Blood Prince","Rowling","J.K.","finished","","",4.0,["Fantasy","Young Adult"],"Long",""],["Harry Potter and the Order of the Phoenix","Rowling","J.K.","finished","","",3.75,["Fantasy","Young Adult"],"Very Long",""],["Harry Potter and the Prisoner of Azkaban","Rowling","J.K.","finished","","",3.75,["Fantasy","Young Adult"],"Medium",""],["Harry Potter and the Sorcerer's Stone","Rowling","J.K.","finished","","",3.5,["Fantasy","Young Adult"],"Medium",""],["Ashes of Man","Ruocchio","Christopher","finished","","",4.0,["Sci-Fi","Space Opera","Epic"],"Long","Sun Eater re-read #9"],["Demon in White","Ruocchio","Christopher","finished","","",5.0,["Sci-Fi","Space Opera","Epic"],"Very Long","Sun Eater re-read #6"],["Disquiet Gods","Ruocchio","Christopher","finished","","",5.0,["Sci-Fi","Space Opera","Epic"],"Very Long","Sun Eater re-read #13"],["Empire of Silence","Ruocchio","Christopher","finished","","",3.5,["Sci-Fi","Space Opera","Epic"],"Long","Sun Eater re-read #1"],["Howling Dark","Ruocchio","Christopher","finished","","",5.0,["Sci-Fi","Space Opera","Epic"],"Long","Sun Eater re-read #3"],["Kingdoms of Death","Ruocchio","Christopher","finished","","",5.0,["Sci-Fi","Space Opera","Epic"],"Long","Sun Eater re-read #8"],["Queen Amid Ashes","Ruocchio","Christopher","unread","N","",0,["Sci-Fi","Space Opera","Novella"],"Short","Sun Eater re-read #4"],["Shadows Upon Time","Ruocchio","Christopher","finished","","",5.0,["Sci-Fi","Space Opera","Novella"],"Short","Sun Eater re-read #14"],["Songs of the Sun Eater","Ruocchio","Christopher","unread","N","",0,["Sci-Fi","Space Opera","Novella"],"Long","Sun Eater re-read #15"],["Tales of the Sun Eater, Volume 1","Ruocchio","Christopher","unread","N","",0,["Sci-Fi","Space Opera","Novella"],"Medium","Sun Eater re-read #5"],["Tales of the Sun Eater, Volume 2","Ruocchio","Christopher","unread","N","",0,["Sci-Fi","Space Opera","Novella"],"Medium","Sun Eater re-read #7"],["Tales of the Sun Eater, Volume 3","Ruocchio","Christopher","unread","N","",0,["Sci-Fi","Space Opera","Novella"],"Medium","Sun Eater re-read #10"],["Tales of the Sun Eater, Volume 4","Ruocchio","Christopher","unread","N","",0,["Sci-Fi","Space Opera","Novella"],"Medium","Sun Eater re-read #12"],["The Dregs of Empire","Ruocchio","Christopher","unread","N","",0,["Sci-Fi","Space Opera","Novella"],"Short","Sun Eater re-read #11"],["The Lesser Devil","Ruocchio","Christopher","unread","N","",0,["Sci-Fi","Space Opera","Novella"],"Short","Sun Eater re-read #2; UP NEXT"],["The Catcher in the Rye","Salinger","J.D.","finished","","",4.25,["Classic","Coming-Of-Age"],"Short",""],["Arcanum Unbounded","Sanderson","Brandon","finished","","",3.25,["Fantasy","Sci-Fi"],"Long",""],["Dawnshard","Sanderson","Brandon","finished","","",3.0,["Fantasy","Novella"],"Short",""],["Elantris","Sanderson","Brandon","finished","","",3.0,["Fantasy"],"Long",""],["Mistborn","Sanderson","Brandon","finished","","",3.75,["Fantasy","Epic"],"Long",""],["Oathbringer","Sanderson","Brandon","finished","","",4.5,["Fantasy","Epic"],"Very Long",""],["Rhythm of War","Sanderson","Brandon","finished","","",3.25,["Fantasy","Epic"],"Very Long",""],["Shadows of Self","Sanderson","Brandon","finished","","",3.25,["Fantasy"],"Medium",""],["The Alloy of Law","Sanderson","Brandon","finished","","",3.0,["Fantasy","Western"],"Medium",""],["The Bands of Mourning","Sanderson","Brandon","finished","","",3.75,["Fantasy"],"Medium",""],["The Hero of Ages","Sanderson","Brandon","finished","","",4.5,["Fantasy","Epic"],"Long",""],["The Lost Metal","Sanderson","Brandon","finished","","",3.5,["Fantasy"],"Long",""],["The Sunlit Man","Sanderson","Brandon","finished","","",3.0,["Fantasy","Sci-Fi"],"Medium",""],["The Way of Kings","Sanderson","Brandon","finished","","",3.75,["Fantasy","Epic"],"Very Long",""],["The Well of Ascension","Sanderson","Brandon","finished","","",3.5,["Fantasy"],"Long",""],["Warbreaker","Sanderson","Brandon","finished","","",3.5,["Fantasy"],"Long",""],["Wind and Truth","Sanderson","Brandon","finished","","",2.0,["Fantasy","Epic"],"Very Long",""],["Words of Radiance","Sanderson","Brandon","finished","","",4.0,["Fantasy","Epic"],"Very Long",""],["The Invisible Life of Addie LaRue","Schwab","V.E.","dnf","","",0,["Fantasy","Romance","Contemporary"],"Medium",""],["Endymion","Simmons","Dan","unread","N","",0,["Sci-Fi","Space Opera"],"Long",""],["Hyperion","Simmons","Dan","finished","","",5.0,["Sci-Fi","Space Opera"],"Long",""],["The Fall of Hyperion","Simmons","Dan","unread","N","",0,["Sci-Fi","Space Opera"],"Long",""],["The Rise of Endymion","Simmons","Dan","unread","N","",0,["Sci-Fi","Space Opera"],"Long",""],["The Terror","Simmons","Dan","unread","N","",0,["Horror","Historical Fiction"],"Very Long",""],["Angle of Repose","Stegner","Wallace","finished","","",3.0,["Literary Fiction","Western","Historical Fiction"],"Long",""],["Crossing to Safety","Stegner","Wallace","unread","N","",0,["Literary Fiction","Contemporary"],"Short",""],["Cannery Row","Steinbeck","John","unread","Y","Print",0,["Literary Fiction","Classic"],"Short",""],["East of Eden","Steinbeck","John","finished","","",5.0,["Literary Fiction","Classic","Frontier"],"Long",""],["Grapes of Wrath","Steinbeck","John","finished","","",5.0,["Literary Fiction","Classic","Frontier"],"Long",""],["In Dubious Battle","Steinbeck","John","unread","N","",0,["Literary Fiction","Classic"],"Medium",""],["Of Mice and Men","Steinbeck","John","finished","","",4.5,["Literary Fiction","Classic"],"Very Short",""],["Sweet Thursday","Steinbeck","John","unread","N","",0,["Literary Fiction","Classic"],"Short",""],["The Moon is Down","Steinbeck","John","unread","Y","Print",0,["Literary Fiction","Classic","War"],"Very Short",""],["The Pearl","Steinbeck","John","finished","","",3.5,["Classic","Novella"],"Very Short",""],["The Red Pony","Steinbeck","John","unread","Y","Print",0,["Literary Fiction","Classic","Coming-Of-Age","Western"],"Very Short",""],["The Short Reign of Pippin IV","Steinbeck","John","unread","N","",0,["Satire","Literary Fiction"],"Short",""],["The Wayward Bus","Steinbeck","John","unread","N","",0,["Literary Fiction","Classic"],"Short",""],["The Winter of Our Discontent","Steinbeck","John","finished","","",4.5,["Literary Fiction","Classic"],"Medium",""],["To a God Unknown","Steinbeck","John","unread","N","",0,["Literary Fiction","Classic"],"Short",""],["Tortilla Flat","Steinbeck","John","unread","Y","Print",0,["Literary Fiction","Classic"],"Short",""],["Travels with Charley","Steinbeck","John","unread","N","",0,["Non-Fiction","Memoir/Biography"],"Short",""],["Snow Crash","Stephenson","Neal","unread","N","",0,["Sci-Fi"],"Long",""],["Dracula","Stoker","Bram","unread","N","",0,["Horror","Classic"],"Medium",""],["Uncle Tom's Cabin","Stowe","Harriet Beecher","finished","","",4.0,["Classic","Historical Fiction"],"Long",""],["The Gone World","Sweterlitsch","Tom","finished","","",3.75,["Sci-Fi","Thriller","Time-Travel"],"Medium",""],["Children of Time","Tchaikovsky","Adrian","unread","N","",0,["Sci-Fi"],"Long",""],["Children of Hurin","Tolkien","J.R.R.","finished","","",4.25,["Fantasy","Classic"],"Medium",""],["Fellowship of the Ring","Tolkien","J.R.R.","finished","","",5.0,["Fantasy","Classic","Epic"],"Medium",""],["Return of the King","Tolkien","J.R.R.","finished","","",5.0,["Fantasy","Classic","Epic"],"Medium",""],["The Hobbit","Tolkien","J.R.R.","finished","","",4.0,["Fantasy","Classic","Young Adult"],"Medium",""],["The Silmarillion","Tolkien","J.R.R.","reading","","",0,["Fantasy","Classic","Epic"],"Medium","read in pieces alongside other books"],["The Two Towers","Tolkien","J.R.R.","finished","","",5.0,["Fantasy","Classic","Epic"],"Medium",""],["Unfinished Tales of Numenor and Middle-earth","Tolkien","J.R.R.","reading","","",0,["Fantasy"],"Long","read in pieces alongside other books"],["Anna Karenina","Tolstoy","Leo","unread","Y","Print",0,["Literary Fiction","Classic","Foreign","Romance"],"Very Long",""],["The Death of Ivan Ilyich","Tolstoy","Leo","unread","N","",0,["Literary Fiction","Classic","Foreign","Novella"],"Very Short",""],["War & Peace","Tolstoy","Leo","unread","Y","Print",0,["Literary Fiction","Classic","Foreign","Historical Fiction","War"],"Very Long",""],["A Gentleman in Moscow","Towles","Amor","finished","","",5.0,["Literary Fiction","Historical Fiction"],"Long",""],["A Table for Two","Towles","Amor","unread","N","",0,["Literary Fiction","Contemporary"],"Medium",""],["Rules of Civility","Towles","Amor","finished","","",3.25,["Literary Fiction","Historical Fiction"],"Medium",""],["The Lincoln Highway","Towles","Amor","finished","","",4.5,["Literary Fiction","Contemporary","Coming-Of-Age"],"Long",""],["Annihilation","VanderMeer","Jeff","finished","","",2.5,["Sci-Fi","Horror"],"Short",""],["A Fire Upon The Deep","Vinge","Vernor","unread","N","",0,["Sci-Fi","Space Opera"],"Long",""],["Breakfast of Champions","Vonnegut","Kurt","dnf","","",0,["Satire","Literary Fiction","Sci-Fi"],"Medium",""],["The Glass Castle","Walls","Jeannette","unread","Y","Print",0,["Non-Fiction","Memoir/Biography","Contemporary"],"Short",""],["All The King's Men","Warren","Robert Penn","unread","N","",0,["Literary Fiction","Classic","Historical Fiction"],"Long",""],["Project Hail Mary","Weir","Andy","finished","","",4.0,["Sci-Fi"],"Long",""],["The Martian","Weir","Andy","finished","","",3.75,["Sci-Fi"],"Medium",""],["All Systems Red","Wells","Martha","finished","","",2.5,["Sci-Fi","Novella"],"Very Short",""],["Educated","Westover","Tara","unread","N","",0,["Non-Fiction","Memoir/Biography"],"Medium",""],["The Picture of Dorian Gray","Wilde","Oscar","unread","Y","Print",0,["Literary Fiction","Classic"],"Short",""],["Augustus","Williams","John","finished","","",5.0,["Literary Fiction","Classic","Historical Fiction"],"Medium",""],["Butcher's Crossing","Williams","John","finished","","",4.5,["Western","Frontier","Literary Fiction"],"Medium",""],["Stoner","Williams","John","finished","","",5.0,["Literary Fiction","Classic"],"Short",""],["The Shadow of the Torturer","Wolfe","Gene","unread","N","",0,["Sci-Fi","Fantasy"],"Medium",""],["Vinland Saga, Vol. 1","Yukimura","Makoto","finished","","",4.0,["Manga","Historical Fiction","Adventure"],"Short",""],["Vinland Saga, Vol. 10","Yukimura","Makoto","finished","","",4.0,["Manga","Historical Fiction","Adventure"],"Short",""],["Vinland Saga, Vol. 11","Yukimura","Makoto","finished","","",3.75,["Manga","Historical Fiction","Adventure"],"Short",""],["Vinland Saga, Vol. 12","Yukimura","Makoto","finished","","",3.25,["Manga","Historical Fiction","Adventure"],"Short",""],["Vinland Saga, Vol. 13","Yukimura","Makoto","unread","Y","Print",0,["Manga","Historical Fiction","Adventure"],"Short",""],["Vinland Saga, Vol. 14","Yukimura","Makoto","unread","Y","Print",0,["Manga","Historical Fiction","Adventure"],"Short",""],["Vinland Saga, Vol. 2","Yukimura","Makoto","finished","","",3.75,["Manga","Historical Fiction","Adventure"],"Short",""],["Vinland Saga, Vol. 3","Yukimura","Makoto","finished","","",3.75,["Manga","Historical Fiction","Adventure"],"Short",""],["Vinland Saga, Vol. 4","Yukimura","Makoto","finished","","",4.5,["Manga","Historical Fiction","Adventure"],"Short",""],["Vinland Saga, Vol. 5","Yukimura","Makoto","finished","","",4.5,["Manga","Historical Fiction","Adventure"],"Short",""],["Vinland Saga, Vol. 6","Yukimura","Makoto","finished","","",4.25,["Manga","Historical Fiction","Adventure"],"Short",""],["Vinland Saga, Vol. 7","Yukimura","Makoto","finished","","",4.0,["Manga","Historical Fiction","Adventure"],"Short",""],["Vinland Saga, Vol. 8","Yukimura","Makoto","finished","","",3.5,["Manga","Historical Fiction","Adventure"],"Short",""],["Vinland Saga, Vol. 9","Yukimura","Makoto","finished","","",3.75,["Manga","Historical Fiction","Adventure"],"Short",""],["Beware of Pity","Zweig","Stefan","unread","N","",0,["Literary Fiction","Classic","Foreign"],"Medium",""],["Chess Story","Zweig","Stefan","finished","","",4.25,["Literary Fiction","Classic","Foreign","Novella"],"Very Short",""],["The Post-Office Girl","Zweig","Stefan","unread","N","",0,["Literary Fiction","Classic","Foreign"],"Short",""]];
+const GENRES=["Classic","Fantasy","Sci-Fi","Horror","Manga","Western","Literary Fiction","Historical Fiction","Mystery","Thriller","Young Adult","Romance","Non-Fiction","Memoir"];
+const GENRE_MAP={"space opera":"Sci-Fi","dystopian":"Sci-Fi","post-apocalyptic":"Sci-Fi","time-travel":"Sci-Fi","frontier":"Western","crime/noir":"Mystery","memoir/biography":"Memoir"};
+const SCALE=[[1,"Unreadable"],[2,"Bad"],[2.5,"Disappointing"],[3,"Neutral"],[3.25,"OK"],[3.5,"Good"],[3.75,"Very Good"],[4,"Great"],[4.25,"Really Great"],[4.5,"Amazing"],[4.75,"Almost Perfect"],[5,"Left Me Speechless"]];
+const STATUS={unread:"Unread",reading:"Currently Reading",finished:"Finished",dnf:"DNF"};
+const OWN={owned:"Owned",not:"Not Owned",library:"Library"};
+const FORMATS=["Print","Audiobook","eBook"];
+const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const KEY="readingRoom.v2",OLDKEY="readingRoom.v1",GOALKEY="readingRoom.goal";
+const mem={};
+function lsGet(k){try{const v=localStorage.getItem(k);return v===null?(k in mem?mem[k]:null):v}catch(e){return k in mem?mem[k]:null}}
+function lsSet(k,v){mem[k]=v;try{localStorage.setItem(k,v)}catch(e){}}
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* data */
+function mapGenres(arr){
+  const out=[];(Array.isArray(arr)?arr:[]).forEach(g=>{
+    const k=String(g).trim().toLowerCase();
+    const hit=GENRES.find(x=>x.toLowerCase()===k)||GENRE_MAP[k];
+    if(hit&&!out.includes(hit))out.push(hit);
+  });
+  return GENRES.filter(g=>out.includes(g));
+}
+function normalize(x,id){
+  let owned="";
+  if(x.owned===true||x.owned==="Y"||x.owned==="owned")owned="owned";
+  else if(x.owned===false||x.owned==="N"||x.owned==="not")owned="not";
+  else if(x.owned==="library")owned="library";
+  return{id,title:String(x.title||""),last:String(x.last||""),first:String(x.first||""),
+    status:STATUS[x.status]?x.status:"unread",owned,
+    format:FORMATS.includes(x.format)?x.format:"",
+    pages:Math.max(0,parseInt(x.pages,10)||0),minutes:Math.max(0,parseInt(x.minutes,10)||0),progress:Math.max(0,Math.round(+x.progress||0)),
+    date:/^\d{4}-\d{2}-\d{2}$/.test(x.date||"")?x.date:"",rating:+x.rating||0,
+    genres:mapGenres(x.genres),notes:String(x.notes||"")};
+}
+let nextId=1,books=[];
+function seedBooks(){nextId=1;return SEED.map(r=>normalize({title:r[0],last:r[1],first:r[2],status:r[3],owned:r[4],format:r[5],rating:r[6],genres:r[7],notes:r[9]},nextId++))}
+function patchGenres(){
+  if(lsGet("readingRoom.patch1"))return;
+  SEED.forEach(r=>{const add=mapGenres(r[7]).filter(g=>g==="Non-Fiction"||g==="Memoir");if(!add.length)return;
+    const b=books.find(x=>x.title===r[0]&&x.last===r[1]);if(b)b.genres=GENRES.filter(g=>b.genres.includes(g)||add.includes(g))});
+  lsSet("readingRoom.patch1","1");save();
+}
+function load(){
+  try{const raw=lsGet(KEY);if(raw){const a=JSON.parse(raw);if(Array.isArray(a)&&a.length){books=a;nextId=Math.max(0,...a.map(b=>b.id))+1;patchGenres();return}}}catch(e){}
+  try{const old=lsGet(OLDKEY);if(old){const a=JSON.parse(old);if(Array.isArray(a)&&a.length){nextId=1;books=a.map(x=>normalize(x,nextId++));save();return}}}catch(e){}
+  books=seedBooks();save();
+}
+function save(){lsSet(KEY,JSON.stringify(books))}
+function goal(){const g=parseInt(lsGet(GOALKEY),10);return g>0?g:24}
+
+/* helpers */
+function parseAuthor(s){
+  s=s.trim().replace(/\s+/g," ");if(!s)return{first:"",last:""};
+  if(s.includes("&")){const p=s.split("&").map(parseAuthor);return{first:p.map(x=>x.first).join(" & "),last:p.map(x=>x.last).join(" & ")}}
+  let jr="";const m=s.match(/^(.*?)\s+(Jr\.?|Sr\.?)$/i);if(m){s=m[1];jr=" "+m[2]}
+  const small=["le","de","la","van","von","da","di","du","del","der"];
+  const t=s.split(" ");if(t.length===1)return{first:"",last:t[0]+jr};
+  let i=t.length-1;while(i>1&&small.includes(t[i-1].toLowerCase()))i--;
+  return{first:t.slice(0,i).join(" "),last:t.slice(i).join(" ")+jr};
+}
+const authorName=b=>(b.first?b.first+" ":"")+b.last;
+const cmpAuthor=(a,b)=>a.last.localeCompare(b.last,undefined,{sensitivity:"base"})||a.first.localeCompare(b.first,undefined,{sensitivity:"base"})||a.title.localeCompare(b.title,undefined,{sensitivity:"base"});
+function todayISO(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function fmtDate(iso){if(!iso)return"";const [y,m,d]=iso.split("-").map(Number);return new Date(y,m-1,d).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"})}
+const avg=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:0;
+const fmtR=r=>String(+(+r).toFixed(2));
+const fmtN=n=>Math.round(n).toLocaleString();
+function fmtHM(m){return m>0?Math.floor(m/60)+":"+String(m%60).padStart(2,"0"):""}
+function fmtDur(m){m=Math.round(m);const h=Math.floor(m/60),r=m%60;return h&&r?`${h} hr ${r} min`:h?`${h} hr`:`${r} min`}
+function parseHM(s){s=String(s).trim();if(!s)return 0;let m;
+  if((m=s.match(/^(\d+):(\d{1,2})$/))&&+m[2]<60)return +m[1]*60+ +m[2];
+  if(/^\d+(\.\d+)?$/.test(s))return Math.round(parseFloat(s)*60);
+  return NaN}
+function toast(t){const e=document.createElement("div");e.className="toast";e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),2200)}
+const isAudio=b=>b.format==="Audiobook";
+const total=b=>isAudio(b)?b.minutes:b.pages;
+const median=a=>{const s=[...a].sort((x,y)=>x-y),m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2};
+
+/* state */
+const TABS=[
+ ["reading","Reading",'<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5zM4 5.5V21.5"/><path d="M9 8h7"/>'],
+ ["toread","TBR",'<path d="M5 4h14v17l-7-4-7 4z"/>'],
+ ["favs","Favorites",'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>'],
+ ["years","Years",'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/>'],
+ ["stats","Stats",'<path d="M5 20V10M12 20V4M19 20v-7"/>'],
+ ["library","Database",'<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>']];
+const TITLES={reading:"Currently Reading",toread:"TBR",favs:"All-Time Favorites",years:"Finished by Year",stats:"Reading Stats",library:"Database",fill:"Quick Fill"};
+const S={tab:"reading",tr:{q:"",own:"all",genre:""},lib:{q:"",st:"all",sort:"author"},year:null,month:"all",sy:"all",fill:{f:"need",q:""}};
+
+/* rows */
+function row(b,mode){
+  let meta="";
+  if(b.status==="finished"){meta=(b.rating?`<span class="rate">★ ${fmtR(b.rating)}</span>`:"")+(b.date&&mode==="year"?`<span>${fmtDate(b.date)}</span>`:"")+(b.date&&mode==="library"?`<span>${fmtDate(b.date)}</span>`:"")}
+  else if(mode==="library")meta=`<span class="pill ${b.status}">${STATUS[b.status]}</span>`;
+  if(b.status==="unread"&&b.owned)meta+=`<span class="pill own">${OWN[b.owned]}</span>`;
+  const five=b.status==="finished"&&b.rating===5?" five":"";
+  return `<button class="row${five}" data-view="${b.id}"><span class="main"><div class="t">${esc(b.title)}</div><div class="a">${esc(authorName(b))}</div></span><span class="meta">${meta}</span></button>`;
+}
+function listHTML(arr,mode,emptyT,emptyS){
+  if(!arr.length)return `<div class="empty"><b>${emptyT}</b>${emptyS||""}</div>`;
+  return `<div class="list">${arr.map(b=>row(b,mode)).join("")}</div>`;
+}
+const matchQ=(b,q)=>!q||(b.title+" "+authorName(b)+" "+b.genres.join(" ")).toLowerCase().includes(q.toLowerCase());
+
+/* reading */
+function progressHTML(b){
+  const t=total(b),p=b.progress,au=isAudio(b);
+  const unit=au?"Time Listened":"Current Page";
+  let top;
+  if(t>0){
+    const pct=Math.min(100,Math.round(p/t*100)),left=Math.max(0,t-p);
+    top=`<div class="pline"><b>${pct}%</b><span>${au?fmtDur(p)+" of "+fmtDur(t)+" · "+fmtDur(left)+" left":"Page "+fmtN(p)+" of "+fmtN(t)+" · "+fmtN(left)+" left"}</span></div><div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><div style="width:${pct}%"></div></div>`;
+  }else{
+    top=`<p class="hint" style="margin:0">${au?"Add the audiobook length":"Add the page count"} in Edit to see your percent complete.</p>`;
+  }
+  return top+`<div class="pin"><label for="pi_${b.id}">${unit}</label><input id="pi_${b.id}" data-pin="${b.id}" ${au?'type="text" inputmode="text" placeholder="h:mm"':'type="number" inputmode="numeric" min="0" placeholder="Page"'} value="${au?fmtHM(p):(p||"")}"><button class="btn primary" data-prog="${b.id}">Update</button></div>`;
+}
+function viewReading(){
+  const cur=books.filter(b=>b.status==="reading").sort(cmpAuthor);
+  const n=books.filter(b=>b.status==="unread").length;
+  let h=`<p class="sub">${cur.length?cur.length+(cur.length===1?" book":" books")+" in progress":"Nothing in progress"}</p>`;
+  if(!cur.length)return h+`<div class="empty"><b>Pick Your Next Book</b>Start one from your TBR list (${n} waiting), or add a new book.<div class="btnrow" style="justify-content:center;margin-top:14px"><button class="btn primary" data-go="toread">Open TBR</button></div></div>`;
+  return h+`<div class="cards">${cur.map(b=>`<div class="bookcard"><div class="top"><div><div class="t">${esc(b.title)}</div><div class="a">${esc(authorName(b))}</div></div><span class="pill fmt">${b.format||"Format Not Set"}</span></div>${progressHTML(b)}<div class="btnrow"><button class="btn primary" data-finish="${b.id}">Finished It</button><button class="btn" data-edit="${b.id}">Edit</button></div></div>`).join("")}</div>`;
+}
+function saveProgress(id){
+  const b=books.find(x=>x.id===id),inp=$("#pi_"+id);if(!b||!inp)return;
+  let v;
+  if(isAudio(b)){v=parseHM(inp.value);if(isNaN(v)){toast("Use h:mm, like 2:30");return}}
+  else{v=inp.value.trim()===""?0:parseInt(inp.value,10);if(isNaN(v)||v<0){toast("Enter a page number");return}}
+  b.progress=v;save();render();toast("Progress Saved");
+}
+
+/* tbr */
+function viewToRead(){
+  return `<p class="sub" id="trsub"></p>
+  <div class="seg">${[["all","All"],["owned","Owned"],["not","Not Owned"],["library","Library"]].map(([k,l])=>`<button class="chip" data-own="${k}" aria-pressed="${S.tr.own===k}">${l}</button>`).join("")}</div>
+  <div class="tools"><input type="search" id="trq" placeholder="Search title, author, genre" value="${esc(S.tr.q)}"><select id="trg" aria-label="Genre"><option value="">All Genres</option>${GENRES.map(g=>`<option${S.tr.genre===g?" selected":""}>${esc(g)}</option>`).join("")}</select></div>
+  <div id="trlist"></div>`;
+}
+function fillToRead(){
+  let a=books.filter(b=>b.status==="unread");
+  const own=a.filter(b=>b.owned==="owned").length;
+  if(S.tr.own!=="all")a=a.filter(b=>b.owned===S.tr.own);
+  if(S.tr.genre)a=a.filter(b=>b.genres.includes(S.tr.genre));
+  a=a.filter(b=>matchQ(b,S.tr.q)).sort(cmpAuthor);
+  $("#trsub").textContent=`${a.length} shown · ${own} owned and ready to read`;
+  $("#trlist").innerHTML=listHTML(a,"toread","Nothing Matches","Try clearing the search or filters.");
+}
+
+/* favorites */
+function viewFavs(){
+  const a=books.filter(b=>b.status==="finished"&&b.rating===5).sort(cmpAuthor);
+  return `<p class="sub">${a.length} ${a.length===1?"book":"books"} rated 5, sorted by author</p>`+listHTML(a,"plain","No 5-Star Books Yet","Rate a finished book 5 (Left Me Speechless) and it lands here.");
+}
+
+/* years */
+function viewYears(){
+  const fin=books.filter(b=>b.status==="finished");
+  const years=[...new Set(fin.filter(b=>b.date).map(b=>b.date.slice(0,4)))].sort().reverse();
+  const nodate=fin.filter(b=>!b.date).length;
+  if(S.year===null||(S.year!=="none"&&!years.includes(S.year))){S.year=years.length?(years.includes(String(new Date().getFullYear()))?String(new Date().getFullYear()):years[0]):"none";S.month="all"}
+  const inYear=S.year==="none"?fin.filter(b=>!b.date):fin.filter(b=>b.date&&b.date.slice(0,4)===S.year);
+  const mcount=MONTHS.map((m,i)=>inYear.filter(b=>b.date&&+b.date.slice(5,7)===i+1).length);
+  if(S.month!=="all"&&!mcount[+S.month-1])S.month="all";
+  const sel=(S.month==="all"?inYear:inYear.filter(b=>+b.date.slice(5,7)===+S.month)).sort((a,b)=>(b.date||"").localeCompare(a.date||"")||cmpAuthor(a,b));
+  const r=sel.filter(b=>b.rating>0).map(b=>b.rating);
+  let h=`<div class="seg">${years.map(y=>`<button class="chip" data-year="${y}" aria-pressed="${S.year===y}">${y} <small>${fin.filter(b=>b.date&&b.date.slice(0,4)===y).length}</small></button>`).join("")}${nodate?`<button class="chip" data-year="none" aria-pressed="${S.year==="none"}">No Date <small>${nodate}</small></button>`:""}</div>`;
+  if(S.year!=="none"&&inYear.length)h+=`<div class="seg"><button class="chip" data-month="all" aria-pressed="${S.month==="all"}">All Months <small>${inYear.length}</small></button>${MONTHS.map((m,i)=>mcount[i]?`<button class="chip" data-month="${i+1}" aria-pressed="${+S.month===i+1}">${m} <small>${mcount[i]}</small></button>`:"").join("")}</div>`;
+  h+=`<p class="sub">${sel.length} finished${r.length?" · average rating "+avg(r).toFixed(2):""}</p>`;
+  if(S.year==="none"&&nodate)h+=`<p class="hint" style="margin:-6px 0 12px">These books have no finish date yet. Open one and add a date to file it under a year.</p><button class="btn primary" data-go="fill" style="width:100%;margin-bottom:12px">Open Quick Fill</button>`;
+  return h+listHTML(sel,"year","Nothing Finished Here","Mark a book finished and it appears here.");
+}
+
+/* database */
+function viewLibrary(){
+  const c=s=>s==="all"?books.length:books.filter(b=>b.status===s).length;
+  const miss=books.filter(b=>b.status==="finished"&&needsDetails(b)).length;
+  return (miss?`<button class="btn primary" data-go="fill" style="width:100%;margin-bottom:12px">Quick Fill · ${miss} finished books need details</button>`:"")+`<div class="seg">${[["all","All"],["finished","Finished"],["unread","Unread"],["reading","Currently Reading"],["dnf","DNF"]].map(([k,l])=>`<button class="chip" data-st="${k}" aria-pressed="${S.lib.st===k}">${l} <small>${c(k)}</small></button>`).join("")}</div>
+  <div class="tools"><input type="search" id="lq" placeholder="Search title, author, genre" value="${esc(S.lib.q)}"><select id="ls" aria-label="Sort">${[["author","Author A–Z"],["title","Title A–Z"],["rating","Highest Rated"],["date","Recently Finished"]].map(([k,l])=>`<option value="${k}"${S.lib.sort===k?" selected":""}>${l}</option>`).join("")}</select></div>
+  <p class="sub" id="lsub"></p><div id="llist"></div>`;
+}
+function fillLibrary(){
+  let a=books.filter(b=>(S.lib.st==="all"||b.status===S.lib.st)&&matchQ(b,S.lib.q));
+  const so=S.lib.sort;
+  if(so==="author")a.sort(cmpAuthor);else if(so==="title")a.sort((x,y)=>x.title.localeCompare(y.title,undefined,{sensitivity:"base"}));
+  else if(so==="rating")a.sort((x,y)=>(y.rating||0)-(x.rating||0)||cmpAuthor(x,y));
+  else a.sort((x,y)=>(y.date||"").localeCompare(x.date||"")||cmpAuthor(x,y));
+  $("#lsub").textContent=a.length+(a.length===1?" book":" books");
+  $("#llist").innerHTML=listHTML(a,"library","Nothing Matches","Try a different search or filter.");
+}
+
+/* stats (finished books only) */
+function bars(items,fmt){
+  const max=Math.max(1,...items.map(i=>i[1]));
+  return `<div class="bars">${items.map(([l,v,x,cls])=>`<div class="bar ${cls||""}"><span class="lab" title="${esc(l)}">${esc(l)}</span><span class="track"><span class="fill" style="display:block;width:${Math.max(v>0?2:0,v/max*100)}%"></span></span><span class="num">${fmt?fmt(v,x):v}</span></div>`).join("")}</div>`;
+}
+function periodGroups(list,val){
+  if(S.sy==="all"){
+    const m={};list.forEach(b=>{if(b.date){const y=b.date.slice(0,4);m[y]=(m[y]||0)+val(b)}});
+    return Object.entries(m).sort((a,b)=>b[0].localeCompare(a[0]));
+  }
+  const m=Array(12).fill(0);list.forEach(b=>{if(b.date)m[+b.date.slice(5,7)-1]+=val(b)});
+  return m.map((v,i)=>[MONTHS[i],v]).filter(x=>x[1]>0);
+}
+function viewStats(){
+  const allFin=books.filter(b=>b.status==="finished");
+  const years=[...new Set(allFin.filter(b=>b.date).map(b=>b.date.slice(0,4)))].sort().reverse();
+  if(S.sy!=="all"&&!years.includes(S.sy))S.sy="all";
+  const fin=S.sy==="all"?allFin:allFin.filter(b=>b.date&&b.date.slice(0,4)===S.sy);
+  const rt=fin.filter(b=>b.rating>0).map(b=>b.rating);
+  const printB=fin.filter(b=>!isAudio(b)&&b.pages>0),audioB=fin.filter(b=>isAudio(b)&&b.minutes>0);
+  const pagesTotal=printB.reduce((s,b)=>s+b.pages,0),minsTotal=audioB.reduce((s,b)=>s+b.minutes,0);
+  const scopeName=S.sy==="all"?"All Time":S.sy;
+  const per=S.sy==="all"?"Year":"Month";
+  let h=`<div class="seg"><button class="chip" data-sy="all" aria-pressed="${S.sy==="all"}">All Time</button>${years.map(y=>`<button class="chip" data-sy="${y}" aria-pressed="${S.sy===y}">${y}</button>`).join("")}</div>`;
+  h+=`<div class="tiles">
+    <div class="tile"><b>${fin.length}</b><span>Books Finished</span></div>
+    <div class="tile"><b>${rt.length?avg(rt).toFixed(2):"–"}</b><span>Average Rating</span></div>
+    <div class="tile"><b>${pagesTotal?fmtN(pagesTotal):"–"}</b><span>Pages Read</span></div>
+    <div class="tile"><b>${minsTotal?fmtDur(minsTotal).replace(" hr","h").replace(" min","m"):"–"}</b><span>Time Listened</span></div></div>`;
+  const yr=String(new Date().getFullYear()),thisYr=allFin.filter(b=>b.date&&b.date.slice(0,4)===yr).length,g=goal();
+  h+=`<h2>${yr} Goal</h2><div class="panel"><b style="font:600 20px var(--serif)">${thisYr} of ${g} books</b><div class="prog"><div style="width:${Math.min(100,thisYr/g*100)}%"></div></div><div class="goalrow">Yearly Goal <input type="number" id="goal" min="1" max="999" value="${g}" aria-label="Yearly goal"> books</div></div>`;
+  if(!fin.length)return h+`<div class="empty" style="margin-top:20px"><b>No Finished Books Here</b>Pick a different period, or finish a book.</div>`;
+  const dist=[...SCALE].reverse().map(([v,l])=>[String(v)+" · "+l,rt.filter(x=>x===v).length,null,v===5?"gold":""]).filter(d=>d[1]>0);
+  h+=`<h2>Ratings · ${scopeName}</h2><div class="panel">${rt.length?bars(dist)+`<p class="hint">${rt.filter(x=>x>=4).length} of ${rt.length} rated books are 4 or higher. Median ${fmtR(median(rt))}.</p>`:`<p class="hint" style="margin:0">Rate finished books to see this.</p>`}</div>`;
+  const gm={};fin.forEach(b=>b.genres.forEach(x=>{(gm[x]=gm[x]||{n:0,r:[]}).n++;if(b.rating>0)gm[x].r.push(b.rating)}));
+  const gl=Object.entries(gm).sort((a,b)=>b[1].n-a[1].n||a[0].localeCompare(b[0]));
+  h+=`<h2>Genres · ${scopeName}</h2><div class="panel">${gl.length?bars(gl.map(([k,v])=>[k,v.n,v.r]),(v,r)=>r&&r.length?`${v} · ★${avg(r).toFixed(1)}`:v):`<p class="hint" style="margin:0">No genres on these books yet.</p>`}</div>`;
+  const am={};fin.forEach(b=>{const k=authorName(b);(am[k]=am[k]||{n:0,r:[]}).n++;if(b.rating>0)am[k].r.push(b.rating)});
+  const al=Object.entries(am).sort((a,b)=>b[1].n-a[1].n||a[0].localeCompare(b[0])).slice(0,10);
+  h+=`<h2>Top Authors · ${scopeName}</h2><div class="panel">${bars(al.map(([k,v])=>[k,v.n,v.r]),(v,r)=>r&&r.length?`${v} · ★${avg(r).toFixed(1)}`:v)}</div>`;
+  const bp=periodGroups(fin,()=>1);
+  h+=`<h2>Books Finished by ${per}</h2><div class="panel">${bp.length?bars(bp):`<p class="hint" style="margin:0">Add finish dates to see this.</p>`}</div>`;
+  const undated=fin.filter(b=>!b.date).length;
+  const note=undated&&S.sy==="all"?`<p class="hint">${undated} finished ${undated===1?"book has":"books have"} no finish date and ${undated===1?"is":"are"} left out of the by-${per.toLowerCase()} chart.</p>`:"";
+  h+=`<h2>Pages Read · ${scopeName}</h2><div class="panel">`;
+  if(printB.length){
+    const lg=[...printB].sort((a,b)=>b.pages-a.pages)[0];
+    h+=`<div class="big">${fmtN(pagesTotal)} pages</div><div style="height:8px"></div>
+    <div class="kv"><span>Books With Page Counts</span><span>${printB.length} of ${fin.filter(b=>!isAudio(b)).length}</span></div>
+    <div class="kv"><span>Average Length</span><span>${fmtN(pagesTotal/printB.length)} pages</span></div>
+    <div class="kv"><span>Longest Book</span><span>${esc(lg.title)} (${fmtN(lg.pages)})</span></div>`;
+    const pg=periodGroups(printB,b=>b.pages);
+    if(pg.length)h+=`<h2 style="font-size:16px;margin:16px 0 8px">By ${per}</h2>`+bars(pg,v=>fmtN(v));
+  }else h+=`<p class="hint" style="margin:0">Add page counts to your finished print books to see totals.</p>`;
+  h+=note+`</div>`;
+  h+=`<h2>Hours Listened · ${scopeName}</h2><div class="panel">`;
+  if(audioB.length){
+    const lg=[...audioB].sort((a,b)=>b.minutes-a.minutes)[0];
+    h+=`<div class="big">${fmtDur(minsTotal)}</div><div style="height:8px"></div>
+    <div class="kv"><span>Audiobooks Finished</span><span>${audioB.length} of ${fin.filter(isAudio).length}</span></div>
+    <div class="kv"><span>Average Length</span><span>${fmtDur(minsTotal/audioB.length)}</span></div>
+    <div class="kv"><span>Longest Audiobook</span><span>${esc(lg.title)} (${fmtDur(lg.minutes)})</span></div>`;
+    const ag=periodGroups(audioB,b=>b.minutes);
+    if(ag.length)h+=`<h2 style="font-size:16px;margin:16px 0 8px">By ${per}</h2>`+bars(ag,v=>(v/60).toFixed(1)+" hr");
+  }else h+=`<p class="hint" style="margin:0">Add audiobook lengths to your finished audiobooks to see totals.</p>`;
+  h+=note+`</div>`;
+  return h;
+}
+
+/* quick fill */
+function needsDetails(b){const len=isAudio(b)?b.minutes:b.pages;return !(len>0)||!b.date}
+function qrow(b){
+  const au=isAudio(b),lv=au?fmtHM(b.minutes):(b.pages||"");
+  return `<div class="qrow${needsDetails(b)?"":" done"}" data-qid="${b.id}"><div><div class="t">${esc(b.title)}</div><div class="a">${esc(authorName(b))}</div></div><div class="qc"><label class="qa"><input type="checkbox" data-q="aud"${au?" checked":""}><span>Audiobook</span></label><input data-q="len" aria-label="${au?"Runtime":"Pages"} for ${esc(b.title)}" ${au?'type="text" inputmode="text" placeholder="h:mm"':'type="number" inputmode="numeric" min="0" placeholder="Pages"'} value="${lv}"><input data-q="date" type="month" aria-label="Month finished for ${esc(b.title)}" value="${b.date?b.date.slice(0,7):""}"></div></div>`;
+}
+function viewFill(){
+  return `<div class="btnrow" style="margin-bottom:10px"><button class="btn" data-go="library">← Back to Database</button></div>
+  <p class="sub" id="qsub"></p>
+  <div class="seg"><button class="chip" data-qf="need" aria-pressed="${S.fill.f==="need"}">Needs Details</button><button class="chip" data-qf="all" aria-pressed="${S.fill.f==="all"}">All Finished</button></div>
+  <div class="tools"><input type="search" id="fq" placeholder="Search title or author" value="${esc(S.fill.q)}"></div>
+  <div id="qlist"></div>`;
+}
+function updateQSub(){
+  const fin=books.filter(b=>b.status==="finished"),done=fin.filter(b=>!needsDetails(b)).length;
+  const el=$("#qsub");if(el)el.textContent=`${done} of ${fin.length} complete · tick Audiobook for audio titles, then enter its runtime as h:mm`;
+}
+function fillQ(){
+  let a=books.filter(b=>b.status==="finished"&&matchQ(b,S.fill.q));
+  if(S.fill.f==="need")a=a.filter(needsDetails);
+  a.sort(cmpAuthor);
+  updateQSub();
+  $("#qlist").innerHTML=a.length?`<div class="list">${a.map(qrow).join("")}</div>`:`<div class="empty"><b>${S.fill.f==="need"?"All Caught Up":"Nothing Matches"}</b>${S.fill.f==="need"?"Every finished book has a length and a month.":"Try a different search."}</div>`;
+}
+function handleQ(el){
+  const rowEl=el.closest("[data-qid]");if(!rowEl||!rowEl.isConnected)return;
+  const b=books.find(x=>x.id===+rowEl.dataset.qid);if(!b)return;
+  const k=el.dataset.q;
+  if(k==="aud"){b.format=el.checked?"Audiobook":"Print";save();rowEl.outerHTML=qrow(b);updateQSub();return}
+  if(k==="len"){
+    if(isAudio(b)){const m=parseHM(el.value);if(isNaN(m)){toast("Use h:mm, like 12:30");el.value=fmtHM(b.minutes);return}b.minutes=m;el.value=fmtHM(m)}
+    else{const n=parseInt(el.value,10)||0;b.pages=n>0?n:0;if(n>0&&!b.format)b.format="Print"}
+  }else if(k==="date"){if(el.value!==(b.date||"").slice(0,7))b.date=el.value?el.value+"-01":""}
+  save();rowEl.classList.toggle("done",!needsDetails(b));updateQSub();
+}
+
+/* render */
+function render(){
+  $("#ttl").textContent=TITLES[S.tab];
+  $("#tabs").innerHTML=TABS.map(([k,l,svg])=>`<button data-tab="${k}"${S.tab===k?' aria-current="page"':""}><svg viewBox="0 0 24 24">${svg}</svg>${l}</button>`).join("");
+  const v={reading:viewReading,toread:viewToRead,favs:viewFavs,years:viewYears,stats:viewStats,library:viewLibrary,fill:viewFill}[S.tab];
+  $("#main").innerHTML=v();
+  if(S.tab==="toread")fillToRead();
+  if(S.tab==="library")fillLibrary();
+  if(S.tab==="fill")fillQ();
+}
+
+/* detail sheet */
+function openDetail(id){
+  const b=books.find(x=>x.id===id);if(!b)return;
+  const au=isAudio(b),t=total(b);
+  const kv=(k,v)=>v?`<div class="kv"><span>${k}</span><span>${v}</span></div>`:"";
+  const rl=b.rating?(SCALE.find(s=>s[0]===b.rating)||[0,""])[1]:"";
+  let prog="";
+  if(b.status==="reading"){prog=t>0?`${Math.min(100,Math.round(b.progress/t*100))}% (${au?fmtDur(b.progress)+" of "+fmtDur(t):"page "+fmtN(b.progress)+" of "+fmtN(t)})`:(b.progress?(au?fmtDur(b.progress):"Page "+fmtN(b.progress)):"")}
+  const five=b.status==="finished"&&b.rating===5;
+  $("#layer").innerHTML=`<div class="overlay" id="ov"><div class="sheet" role="dialog" aria-modal="true" aria-label="Book Details">
+   <span class="pill ${b.status}">${STATUS[b.status]}</span>
+   <h3 style="margin:10px 0 2px">${esc(b.title)}</h3>
+   <p class="sub" style="margin-bottom:14px">${esc(authorName(b))}</p>
+   <div class="panel${five?" gold":""}" style="padding-block:8px">
+   ${kv("Rating",b.rating?`<b style="color:${five?"var(--gold-ink)":"var(--bark)"}">★ ${fmtR(b.rating)}</b> · ${rl}`:"")}
+   ${kv("Date Finished",b.date?fmtDate(b.date):"")}
+   ${kv("Progress",prog)}
+   ${kv("Ownership",b.owned?OWN[b.owned]:"")}
+   ${kv("Format",b.format)}
+   ${kv("Pages",b.pages?fmtN(b.pages):"")}
+   ${kv("Audiobook Length",b.minutes?fmtDur(b.minutes):"")}
+   ${kv("Genres",b.genres.map(esc).join(", "))}
+   ${kv("Notes",esc(b.notes))}
+   ${!(b.rating||b.date||prog||b.owned||b.format||b.pages||b.minutes||b.genres.length||b.notes)?'<p class="hint" style="margin:8px 0">No other details yet. Tap Edit to add some.</p>':""}
+   </div>
+   <div class="actions" style="margin-top:16px"><button type="button" class="btn" id="dclose">Close</button><button type="button" class="btn primary" id="dedit">Edit</button></div>
+  </div></div>`;
+  $("#dclose").onclick=closeSheet;
+  $("#dedit").onclick=()=>openForm(id);
+  $("#ov").addEventListener("mousedown",e=>{if(e.target.id==="ov")closeSheet()});
+}
+
+/* edit sheet */
+function closeSheet(){$("#layer").innerHTML=""}
+function openForm(id,preset){
+  const b=id?books.find(x=>x.id===id):{id:0,title:"",first:"",last:"",status:"unread",owned:"",format:"",pages:0,minutes:0,progress:0,date:"",rating:0,genres:[],notes:""};
+  if(!b)return;
+  const st=preset&&preset.status?preset.status:b.status;
+  const date=preset&&preset.date?preset.date:b.date;
+  const opt=(type,name,val,label,checked,cls="")=>`<label class="opt ${cls}"><input type="${type}" name="${name}" value="${esc(val)}"${checked?" checked":""}><span>${label}</span></label>`;
+  const au=isAudio(b);
+  $("#layer").innerHTML=`<div class="overlay" id="ov"><form class="sheet" id="form" role="dialog" aria-modal="true" aria-label="${id?"Edit Book":"Add a Book"}" novalidate>
+   <h3>${id?"Edit Book":"Add a Book"}</h3>
+   <div class="field"><label for="f_title">Title</label><input type="text" id="f_title" value="${esc(b.title)}" autocomplete="off"></div>
+   <div class="field"><label for="f_author">Author</label><input type="text" id="f_author" list="authors" value="${esc(authorName(b))}" autocomplete="off"><datalist id="authors">${[...new Set(books.map(authorName))].sort().map(a=>`<option value="${esc(a)}">`).join("")}</datalist><p class="hint" id="authhint"></p></div>
+   <div class="field"><span class="lbl">Status</span><div class="opts">${Object.entries(STATUS).map(([k,l])=>opt("radio","status",k,l,st===k)).join("")}</div></div>
+   <div class="field"><span class="lbl">Format</span><div class="opts">${opt("radio","format","","None",!b.format)}${FORMATS.map(f=>opt("radio","format",f,f,b.format===f)).join("")}</div></div>
+   <div class="field forprint"><label for="f_pages">Pages</label><input type="number" id="f_pages" min="0" inputmode="numeric" value="${b.pages||""}"></div>
+   <div class="field foraudio"><label for="f_mins">Audiobook Length (h:mm)</label><input type="text" id="f_mins" placeholder="12:30" value="${fmtHM(b.minutes)}"></div>
+   <div id="readbox"><div class="field forprint"><label for="f_progp">Current Page</label><input type="number" id="f_progp" min="0" inputmode="numeric" value="${!au&&b.progress?b.progress:""}"></div>
+   <div class="field foraudio"><label for="f_progm">Time Listened (h:mm)</label><input type="text" id="f_progm" placeholder="2:30" value="${au?fmtHM(b.progress):""}"></div></div>
+   <div id="finbox"><div class="field"><span class="lbl">Rating</span><div class="opts">${opt("radio","rating","0","None",!b.rating)}${SCALE.map(([v,l])=>opt("radio","rating",v,`${v} · ${l}`,b.rating===v,"r")).join("")}</div></div>
+   <div class="field"><label for="f_date">Date Finished</label><input type="date" id="f_date" value="${esc(date)}"></div></div>
+   <div class="field"><span class="lbl">Ownership</span><div class="opts">${Object.entries(OWN).map(([k,l])=>opt("radio","owned",k,l,b.owned===k)).join("")}</div></div>
+   <div class="field"><span class="lbl">Genres</span><div class="opts">${GENRES.map(g=>opt("checkbox","genre",g,esc(g),b.genres.includes(g))).join("")}</div></div>
+   <div class="field"><label for="f_notes">Notes</label><textarea id="f_notes">${esc(b.notes)}</textarea></div>
+   <p class="hint" id="err" style="color:var(--clay);font-weight:600" hidden></p>
+   <div class="actions"><button type="button" class="btn" id="cancel">Cancel</button><button type="submit" class="btn primary">Save</button></div>
+   ${id?`<div class="actions" style="margin-top:14px"><button type="button" class="btn danger" id="del">Delete Book</button></div>`:""}
+  </form></div>`;
+  const f=$("#form");
+  const vis=()=>{
+    const audio=f.format.value==="Audiobook",s=f.status.value;
+    $$(".forprint",f).forEach(e=>e.hidden=audio);
+    $$(".foraudio",f).forEach(e=>e.hidden=!audio);
+    $("#readbox").hidden=s!=="reading";
+    $("#finbox").hidden=s!=="finished";
+  };
+  const sync=()=>{const p=parseAuthor($("#f_author").value);$("#authhint").textContent=p.last?`Filed under ${p.last}${p.first?", "+p.first:""}`:""};
+  vis();sync();
+  f.addEventListener("change",e=>{
+    if(e.target.name==="status"&&e.target.value==="finished"&&!$("#f_date").value)$("#f_date").value=todayISO();
+    if(e.target.name==="status"||e.target.name==="format")vis();
+  });
+  $("#f_author").addEventListener("input",sync);
+  $("#cancel").onclick=closeSheet;
+  $("#ov").addEventListener("mousedown",e=>{if(e.target.id==="ov")closeSheet()});
+  if(id){let armed=false;$("#del").onclick=function(){if(!armed){armed=true;this.textContent="Tap Again to Delete for Good";return}
+    books=books.filter(x=>x.id!==id);save();closeSheet();render();toast("Book Deleted")}}
+  f.addEventListener("submit",e=>{
+    e.preventDefault();
+    const title=$("#f_title").value.trim(),p=parseAuthor($("#f_author").value),err=$("#err");
+    const fail=m=>{err.textContent=m;err.hidden=false};
+    if(!title)return fail("Add a title.");
+    if(!p.last)return fail("Add an author.");
+    const status=f.status.value,format=f.format.value;
+    const mins=parseHM($("#f_mins").value);
+    if(isNaN(mins))return fail("Use h:mm for audiobook length, like 12:30.");
+    const pages=parseInt($("#f_pages").value,10)||0;
+    let progress=b.progress;
+    if(status==="reading"){
+      if(format==="Audiobook"){progress=parseHM($("#f_progm").value);if(isNaN(progress))return fail("Use h:mm for time listened, like 2:30.")}
+      else progress=parseInt($("#f_progp").value,10)||0;
+    }
+    const o={id:b.id,title,first:p.first,last:p.last,status,owned:f.owned.value||"",format,pages,minutes:mins,progress,
+      rating:status==="finished"?parseFloat(f.rating.value)||0:0,
+      date:status==="finished"?($("#f_date").value||todayISO()):"",
+      genres:GENRES.filter(g=>$$("input[name=genre]:checked",f).some(i=>i.value===g)),notes:$("#f_notes").value.trim()};
+    if(id)books[books.findIndex(x=>x.id===id)]=o;else{o.id=nextId++;books.push(o)}
+    save();closeSheet();render();toast(id?"Saved":"Book Added");
+  });
+  setTimeout(()=>{if(!id)$("#f_title").focus()},50);
+}
+
+/* settings sheet */
+function csv(){
+  const q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
+  const head=["Author Last Name","Author First Name","Book Title","Ownership","Read (Y/N)","Status","Format","Pages","Audiobook Length (h:mm)","Progress","Date Finished","Rating","Genres","Notes"];
+  return [head.map(q).join(","),...[...books].sort(cmpAuthor).map(b=>[b.last,b.first,b.title,OWN[b.owned]||"",b.status==="finished"?"Y":"N",STATUS[b.status],b.format,b.pages||"",fmtHM(b.minutes),b.progress?(isAudio(b)?fmtHM(b.progress):b.progress):"",b.date,b.rating||"",b.genres.join(", "),b.notes].map(q).join(","))].join("\n");
+}
+function copyText(t,msg){
+  const done=()=>toast(msg);
+  const fb=()=>{const a=$("#bk");a.value=t;a.select();try{document.execCommand("copy");done()}catch(e){toast("Select the text and copy it")}};
+  try{navigator.clipboard.writeText(t).then(done,fb)}catch(e){fb()}
+}
+function openSettings(){
+  $("#layer").innerHTML=`<div class="overlay" id="ov"><div class="sheet" role="dialog" aria-modal="true" aria-label="Backup and Restore">
+   <h3>Backup and Restore</h3>
+   <p class="hint" style="margin:0 0 12px">Your list is saved on this device. Copy a backup now and then, and paste it back to restore it or move to another device.</p>
+   <div class="btnrow"><button class="btn primary" id="cj">Copy Backup</button><button class="btn" id="cc">Copy as Spreadsheet (CSV)</button></div>
+   <h2 style="margin-top:22px">Restore from Backup</h2>
+   <div class="field"><textarea class="code" id="bk" placeholder="Paste a backup here"></textarea></div>
+   <div class="btnrow"><button class="btn" id="imp">Restore from Pasted Backup</button></div>
+   <p class="hint" id="impmsg" style="color:var(--clay);font-weight:600" hidden></p>
+   <h2>Reset</h2>
+   <div class="btnrow"><button class="btn danger" id="rst">Reset to Original Spreadsheet List</button></div>
+   <div class="actions" style="margin-top:22px"><button class="btn primary" id="close">Done</button></div></div></div>`;
+  $("#close").onclick=closeSheet;
+  $("#ov").addEventListener("mousedown",e=>{if(e.target.id==="ov")closeSheet()});
+  $("#cj").onclick=()=>copyText(JSON.stringify({app:"readingRoom",version:2,books}),"Backup Copied");
+  $("#cc").onclick=()=>copyText(csv(),"Spreadsheet Copied");
+  let armI=false;$("#imp").onclick=function(){
+    const m=$("#impmsg");m.hidden=true;
+    let a;try{const j=JSON.parse($("#bk").value);a=Array.isArray(j)?j:j.books}catch(e){}
+    if(!Array.isArray(a)||!a.length||!a.every(x=>x&&typeof x.title==="string"&&typeof x.last==="string"&&STATUS[x.status])){m.textContent="That doesn't look like a Reading Room backup. Copy a fresh one and paste it here.";m.hidden=false;return}
+    if(!armI){armI=true;this.textContent=`Tap Again to Replace Your List With ${a.length} Books`;return}
+    nextId=1;books=a.map(x=>normalize(x,nextId++));save();closeSheet();render();toast("Restored "+books.length+" Books")};
+  let armR=false;$("#rst").onclick=function(){if(!armR){armR=true;this.textContent="Tap Again to Erase Changes and Reset";return}
+    books=seedBooks();save();closeSheet();render();toast("List Reset")};
+}
+
+/* events */
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-tab],[data-view],[data-edit],[data-finish],[data-go],[data-own],[data-st],[data-year],[data-month],[data-sy],[data-prog],[data-qf]");
+  if(!t)return;
+  const d=t.dataset;
+  if(d.tab){S.tab=d.tab;render();window.scrollTo(0,0)}
+  else if(d.go){S.tab=d.go;render();window.scrollTo(0,0)}
+  else if(d.view)openDetail(+d.view);
+  else if(d.edit)openForm(+d.edit);
+  else if(d.finish)openForm(+d.finish,{status:"finished",date:todayISO()});
+  else if(d.prog)saveProgress(+d.prog);
+  else if(d.qf){S.fill.f=d.qf;render()}
+  else if(d.own){S.tr.own=d.own;render()}
+  else if(d.st){S.lib.st=d.st;render()}
+  else if(d.year){S.year=d.year;S.month="all";render()}
+  else if(d.month){S.month=d.month;render()}
+  else if(d.sy){S.sy=d.sy;render()}
+});
+document.addEventListener("input",e=>{
+  if(e.target.id==="trq"){S.tr.q=e.target.value;fillToRead()}
+  if(e.target.id==="lq"){S.lib.q=e.target.value;fillLibrary()}
+  if(e.target.id==="fq"){S.fill.q=e.target.value;fillQ()}
+});
+document.addEventListener("change",e=>{
+  if(e.target.dataset&&e.target.dataset.q){handleQ(e.target);return}
+  if(e.target.id==="trg"){S.tr.genre=e.target.value;fillToRead()}
+  if(e.target.id==="ls"){S.lib.sort=e.target.value;fillLibrary()}
+  if(e.target.id==="goal"){const v=parseInt(e.target.value,10);if(v>0){lsSet(GOALKEY,String(v));render()}}
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape")closeSheet();
+  if(e.key==="Enter"&&e.target.dataset&&e.target.dataset.pin){e.preventDefault();saveProgress(+e.target.dataset.pin)}
+});
+$("#add").onclick=()=>openForm(0);
+$("#gear").onclick=openSettings;
+load();render();
+</script>
+</body>
+</html>
