@@ -506,7 +506,7 @@ function openDetail(id){
    ${kv("Notes",esc(b.notes))}
    ${!(b.rating||b.date||prog||b.owned||b.format||b.pages||b.minutes||b.genres.length||b.notes)?'<p class="hint" style="margin:8px 0">No other details yet. Tap Edit to add some.</p>':""}
    </div>
-   <div class="actions" style="margin-top:16px"><button type="button" class="btn" id="dclose">Close</button><button type="button" class="btn" id="dclose">Close</button>${b.status==="finished"?'<button type="button" class="btn" id="dre">Log Re-read</button>':""}<button type="button" class="btn primary" id="dedit">Edit</button>
+      <div class="actions" style="margin-top:16px"><button type="button" class="btn" id="dclose">Close</button>${b.status==="finished"?'<button type="button" class="btn" id="dre">Log Re-read</button>':""}<button type="button" class="btn primary" id="dedit">Edit</button></div>
   </div></div>`;
   $("#dclose").onclick=closeSheet;
   $("#dedit").onclick=()=>openForm(id);
