@@ -396,7 +396,7 @@ function viewStats(){
   const gm={};fin.forEach(b=>b.genres.forEach(x=>{(gm[x]=gm[x]||{n:0,r:[]}).n++;if(b.rating>0)gm[x].r.push(b.rating)}));
   const gl=Object.entries(gm).sort((a,b)=>b[1].n-a[1].n||a[0].localeCompare(b[0]));
   h+=`<h2>Genres · ${scopeName}</h2><div class="panel">${gl.length?bars(gl.map(([k,v])=>[k,v.n,v.r]),(v,r)=>r&&r.length?`${v} · ★${avg(r).toFixed(1)}`:v):`<p class="hint" style="margin:0">No genres on these books yet.</p>`}</div>`;
-  const am={};fin.forEach(b=>{const k=authorName(b);(am[k]=am[k]||{n:0,r:[]}).n++;if(b.rating>0)am[k].r.push(b.rating)});
+  const am={};fin.forEach(b=>{const k=authorName(b);const o=(am[k]=am[k]||{n:0,r:[],t:new Set()});if(!o.t.has(b.title)){o.t.add(b.title);o.n++}if(b.rating>0)am[k].r.push(b.rating)});
   const al=Object.entries(am).sort((a,b)=>b[1].n-a[1].n||a[0].localeCompare(b[0])).slice(0,10);
   h+=`<h2>Top Authors · ${scopeName}</h2><div class="panel">${bars(al.map(([k,v])=>[k,v.n,v.r]),(v,r)=>r&&r.length?`${v} · ★${avg(r).toFixed(1)}`:v)}</div>`;
   const bp=periodGroups(fin,()=>1);
