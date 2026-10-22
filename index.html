@@ -118,7 +118,7 @@ nav.tabs button[aria-current="page"]{color:var(--moss);background:var(--moss-sof
 .qrow .t{font:600 16px/1.25 var(--serif);overflow-wrap:anywhere}
 .qrow .a{color:var(--muted);font-size:13px}
 .qc{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.qc input[type=number],.qc input[type=text],.qc input[type=month]{flex:1 1 110px;min-width:0;height:44px;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:0 10px}
+.qc input[type=number],.qc input[type=text],.qc input[type=month],.qc select{flex:1 1 110px;min-width:0;height:44px;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:0 10px}
 .qa{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);font-size:14px;font-weight:500}
 .qa input{width:20px;height:20px;accent-color:var(--moss);margin:0}
 .big{font:600 30px/1.1 var(--serif);font-variant-numeric:tabular-nums}
@@ -429,10 +429,10 @@ function viewStats(){
 }
 
 /* quick fill */
-function needsDetails(b){const len=isAudio(b)?b.minutes:b.pages;return !(len>0)||!b.date}
+function needsDetails(b){const len=isAudio(b)?b.minutes:b.pages;return !(len>0)||!b.date||!b.owned}
 function qrow(b){
   const au=isAudio(b),lv=au?fmtHM(b.minutes):(b.pages||"");
-  return `<div class="qrow${needsDetails(b)?"":" done"}" data-qid="${b.id}"><div><div class="t">${esc(b.title)}</div><div class="a">${esc(authorName(b))}</div></div><div class="qc"><label class="qa"><input type="checkbox" data-q="aud"${au?" checked":""}><span>Audiobook</span></label><input data-q="len" aria-label="${au?"Runtime":"Pages"} for ${esc(b.title)}" ${au?'type="text" inputmode="text" placeholder="h:mm"':'type="number" inputmode="numeric" min="0" placeholder="Pages"'} value="${lv}"><input data-q="date" type="month" aria-label="Month finished for ${esc(b.title)}" value="${b.date?b.date.slice(0,7):""}"></div></div>`;
+  return `<div class="qrow${needsDetails(b)?"":" done"}" data-qid="${b.id}"><div><div class="t">${esc(b.title)}</div><div class="a">${esc(authorName(b))}</div></div><div class="qc"><label class="qa"><input type="checkbox" data-q="aud"${au?" checked":""}><span>Audiobook</span></label><input data-q="len" aria-label="${au?"Runtime":"Pages"} for ${esc(b.title)}" ${au?'type="text" inputmode="text" placeholder="h:mm"':'type="number" inputmode="numeric" min="0" placeholder="Pages"'} value="${lv}"><input data-q="date" type="month" aria-label="Month finished for ${esc(b.title)}" value="${b.date?b.date.slice(0,7):""}"><select data-q="own" aria-label="Ownership for ${esc(b.title)}"><option value="">Ownership</option><option value="owned"${b.owned==="owned"?" selected":""}>Owned</option><option value="not"${b.owned==="not"?" selected":""}>Not Owned</option><option value="library"${b.owned==="library"?" selected":""}>Library</option></select></div></div>`;
 }
 function viewFill(){
   return `<div class="btnrow" style="margin-bottom:10px"><button class="btn" data-go="library">← Back to Database</button></div>
@@ -460,7 +460,7 @@ function handleQ(el){
   if(k==="len"){
     if(isAudio(b)){const m=parseHM(el.value);if(isNaN(m)){toast("Use h:mm, like 12:30");el.value=fmtHM(b.minutes);return}b.minutes=m;el.value=fmtHM(m)}
     else{const n=parseInt(el.value,10)||0;b.pages=n>0?n:0;if(n>0&&!b.format)b.format="Print"}
-  }else if(k==="date"){if(el.value!==(b.date||"").slice(0,7))b.date=el.value?el.value+"-01":""}
+  }else if(k==="own"){b.owned=el.value}else if(k==="date"){if(el.value!==(b.date||"").slice(0,7))b.date=el.value?el.value+"-01":""}
   save();rowEl.classList.toggle("done",!needsDetails(b));updateQSub();
 }
 
@@ -475,7 +475,13 @@ function render(){
   if(S.tab==="fill")fillQ();
 }
 
+function logReread(id){
+  const b=books.find(x=>x.id===id);if(!b)return;
+  const c={...b,id:nextId++,date:todayISO(),rating:0,progress:0,notes:"Re-read"};
+  books.push(c);save();openForm(c.id);
+}
 /* detail sheet */
+
 function openDetail(id){
   const b=books.find(x=>x.id===id);if(!b)return;
   const au=isAudio(b),t=total(b);
@@ -500,10 +506,12 @@ function openDetail(id){
    ${kv("Notes",esc(b.notes))}
    ${!(b.rating||b.date||prog||b.owned||b.format||b.pages||b.minutes||b.genres.length||b.notes)?'<p class="hint" style="margin:8px 0">No other details yet. Tap Edit to add some.</p>':""}
    </div>
-   <div class="actions" style="margin-top:16px"><button type="button" class="btn" id="dclose">Close</button><button type="button" class="btn primary" id="dedit">Edit</button></div>
+   <div class="actions" style="margin-top:16px"><button type="button" class="btn" id="dclose">Close</button><button type="button" class="btn" id="dclose">Close</button>${b.status==="finished"?'<button type="button" class="btn" id="dre">Log Re-read</button>':""}<button type="button" class="btn primary" id="dedit">Edit</button>
   </div></div>`;
   $("#dclose").onclick=closeSheet;
   $("#dedit").onclick=()=>openForm(id);
+  if($("#dre"))$("#dre").onclick=()=>logReread(id);
+
   $("#ov").addEventListener("mousedown",e=>{if(e.target.id==="ov")closeSheet()});
 }
 
